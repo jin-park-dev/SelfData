@@ -8,21 +8,13 @@ from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
 import datetime
+from dateutil import relativedelta
+from Daily.util_report_config import daily_config
 
 
 # Config related
 file_loc = r'D:\OneDrive\0 My Files\0 System\3 Workspace\PycharmProjects\1 Personal Host Git\1 SelfData\Cleaning\selfdata_01.db'
 
-daily_config = {'weight':
-            {
-                'y_lim_offset': 3
-            }
-
-
-
-
-
-        }
 
 # =====================
 
@@ -31,13 +23,13 @@ c = conn.cursor()
 
 # ====================
 
-def df_with_query(table, date_name, start, end):
+def df_with_query(table, date_name, start_date, end_date):
 
 
     query = '''
     SELECT * FROM {}
     WHERE "{}" BETWEEN date("{}") AND date("{}")
-    '''.format(table, date_name, start, end)
+    '''.format(table, date_name, start_date, end_date)
 
     # print(query)
 
@@ -46,11 +38,11 @@ def df_with_query(table, date_name, start, end):
 
 # Currently latest plot_monthly. 14-Aug-20176
 # x, y, table name, style (e.g ggplot), save (png to hard drive)
-def plot_monthly(series_dates, series_record, tbl_name, style='fivethirtyeight', save=False):
-
-
+def plot_monthly(series_dates, series_record, tbl_name, start_date, end_date, style='fivethirtyeight', save=False):
 
     series_dates = pd.to_datetime(series_dates, format="%Y-%m-%d %H:%M:%S")
+
+    # date_list is require to create x-axis
     dates_list = []
     for i in series_dates:
         dates_list.append(i)
@@ -58,7 +50,7 @@ def plot_monthly(series_dates, series_record, tbl_name, style='fivethirtyeight',
     # date1 = dates_list[0]
     # date2 = dates_list[len(dates_list)-1]
 
-    print(dates_list[0])
+    # print(dates_list[0])
 
     years = YearLocator()   # every year
     months = MonthLocator(interval=1)  # every month
@@ -126,8 +118,8 @@ def plot_monthly(series_dates, series_record, tbl_name, style='fivethirtyeight',
 
     # Intelligently plot y-axis range
 
-    lim_list = set_min_max_record(tbl_name, series_record.name)
-    print(lim_list)
+    lim_list = set_min_max_record(tbl_name, series_record.name, start_date, end_date)
+    print('lim_list'.format(lim_list))
     ax.set_ylim(lim_list)
 
 
@@ -176,27 +168,47 @@ def min_max_record(tbl_name, col):
     return series_min, series_max
 
 # Returns array to set for y_lim (or x_lim)
-def set_min_max_record(tbl_name, col):
+def set_min_max_record(tbl_name, col, start_date, end_date):
 
     if tbl_name in daily_config:
-        print('table found in config. Using config to set y_lim')
-        y_lim_offset = daily_config[tbl_name]['y_lim_offset']
+        print('table( {} ) found in config. Using config to set y_lim'.format(tbl_name))
 
-        tbl_name = 'weight'
-        date_name = 'Date'
-        start_date = '2017-02-01'
-        end_date = '2017-09-30'
-        y_axis = 'Weight'
+        # offset value not used yet
+
+        config = daily_config[tbl_name]
+
+        y_lim_offset = config['y_lim_offset']
+        tbl_name = tbl_name
+        date_name = config['date_name']
+        y_axis = config['y_axis']
+        y_lim_offset_percentage = config['y_lim_offset_percentage']
+
+        start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+        start_date = start_date + relativedelta.relativedelta(months=-y_lim_offset)
+        # print(start_date)
+        # print(type(start_date))
+        end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+        end_date = end_date + relativedelta.relativedelta(months=+y_lim_offset)
+        # print(end_date)
+        # print(type(end_date))
+
 
         df = df_with_query(tbl_name, date_name, start_date, end_date)
-        print(df.head())
-        print(df.tail())
-        # return [72, 78]
+        series = df[y_axis]
+        series_max = series.max()
+        series_min = series.min()
+        lim_min = series_min
+        lim_max = series_max
+        percent = ((lim_min+lim_max)/2)*y_lim_offset_percentage
+        print('offset percentage value: '.format(percent))
+        return [lim_min-percent, lim_max+percent]
+        # return [lim_min-1, lim_max+1]
 
 
 
 
-    # For looking at whole of df
+
+# For looking at whole of df
     query = '''
     SELECT "{col}" FROM {tbl_name}
     '''.format(col=col, tbl_name=tbl_name)
@@ -204,6 +216,7 @@ def set_min_max_record(tbl_name, col):
     # print(query)
 
     series = pd.read_sql(query, con=conn)
+    # print(type(series))
     # print(series)
     series_max = series.max()
     series_min = series.min()
@@ -254,5 +267,5 @@ if __name__ == '__main__':
     y_axis = 'Weight'
 
     df = df_with_query(tbl_name, date_name, start_date, end_date)
-    plot_monthly(df[date_name], df[y_axis], tbl_name)
+    plot_monthly(df[date_name], df[y_axis], tbl_name, start_date, end_date)
 

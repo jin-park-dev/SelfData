@@ -9,7 +9,7 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression
 import datetime
 from dateutil import relativedelta
-from Daily.util_report_config import daily_config
+from Report.util_report_config import daily_config
 
 
 # Config related
@@ -38,7 +38,7 @@ def df_with_query(table, date_name, start_date, end_date):
 
 # Currently latest plot_monthly. 14-Aug-20176
 # x, y, table name, style (e.g ggplot), save (png to hard drive)
-def plot_monthly(series_dates, series_record, tbl_name, start_date, end_date, style='fivethirtyeight', save=False):
+def plot_monthly(series_dates, series_record, tbl_name, start_date, end_date, style='fivethirtyeight', save=True):
 
     series_dates = pd.to_datetime(series_dates, format="%Y-%m-%d %H:%M:%S")
 
@@ -52,12 +52,7 @@ def plot_monthly(series_dates, series_record, tbl_name, start_date, end_date, st
 
     # print(dates_list[0])
 
-    years = YearLocator()   # every year
-    months = MonthLocator(interval=1)  # every month
-    days = DayLocator(bymonthday=range(1,31,7)) #, interval=5
-    loc = WeekdayLocator(byweekday=MO)
-    dateFmt_Maj = DateFormatter('%d-%m-%Y %a')
-    dateFmt_Min = DateFormatter('%d')
+
 
 
 
@@ -109,18 +104,72 @@ def plot_monthly(series_dates, series_record, tbl_name, start_date, end_date, st
     # sns.lmplot(dates_list, series_record, data=series_record, fit_reg=True)
     # plt.gcf().autofmt_xdate()
 
-    # format the ticks
-    ax.xaxis.set_major_locator(loc)
-    ax.xaxis.set_major_formatter(dateFmt_Maj)
-    ax.xaxis.set_minor_locator(days)
-    ax.xaxis.set_minor_formatter(dateFmt_Min)
-    # ax.autoscale_view()
+    # Intelligently scaling x-axis labels
+
+    # If it's under 3 month
+    if len(series_dates) < 110:
+        years = YearLocator()   # every year
+        months = MonthLocator(interval=1)  # every month
+        days = DayLocator(bymonthday=range(1,31,7)) #, interval=5
+        loc = WeekdayLocator(byweekday=MO)
+        dateFmt_Maj = DateFormatter('%d-%m-%Y %a')
+        dateFmt_Min = DateFormatter('%d')
+
+        # format the ticks
+        ax.xaxis.set_major_locator(loc)
+        ax.xaxis.set_major_formatter(dateFmt_Maj)
+        ax.xaxis.set_minor_locator(days)
+        ax.xaxis.set_minor_formatter(dateFmt_Min)
+        # ax.autoscale_view()
+    #if it's over 3 month and under year (ish)
+    elif len(series_dates) >= 110 and len(series_dates) < 350:
+        years = YearLocator()   # every year
+        months = MonthLocator(interval=1)  # every month
+        days = DayLocator(bymonthday=range(7,31,7)) #, interval=5
+        dateFmt_Maj = DateFormatter('%d-%m')
+        dateFmt_Min = DateFormatter('%d')
+
+        # format the ticks
+        ax.xaxis.set_major_locator(months)
+        ax.xaxis.set_major_formatter(dateFmt_Maj)
+        ax.xaxis.set_minor_locator(days)
+        ax.xaxis.set_minor_formatter(dateFmt_Min)
+    else:
+        years = YearLocator()   # every year
+        months = MonthLocator(interval=3)  # every month
+        #days = DayLocator(bymonthday=range(1,31,7)) #, interval=5
+        loc = WeekdayLocator(byweekday=MO)
+        dateFmt_Maj = DateFormatter('%Y')
+        dateFmt_Min = DateFormatter('%m')
+
+        # format the ticks
+        ax.xaxis.set_major_locator(years)
+        ax.xaxis.set_major_formatter(dateFmt_Maj)
+        ax.xaxis.set_minor_locator(months)
+        ax.xaxis.set_minor_formatter(dateFmt_Min)
+
 
     # Intelligently plot y-axis range
 
     lim_list = set_min_max_record(tbl_name, series_record.name, start_date, end_date)
-    print('lim_list'.format(lim_list))
+    # print('lim_list'.format(lim_list))
+    # print(start_date)
+    # print(type(start_date))
+    # print(end_date)
     ax.set_ylim(lim_list)
+
+    # Plot x-range so it shows whole of x-axis instead of streching from where data is available.
+
+    days = 1 # So edge values of x-axis doesn't get cut.
+    start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+    start_date = start_date + relativedelta.relativedelta(days=-days)
+    # print(start_date)
+    # print(type(start_date))
+    end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+    end_date = end_date + relativedelta.relativedelta(days=+days)
+
+
+    ax.set_xlim([start_date, end_date])
 
 
     # name axis
@@ -204,7 +253,33 @@ def set_min_max_record(tbl_name, col, start_date, end_date):
         return [lim_min-percent, lim_max+percent]
         # return [lim_min-1, lim_max+1]
 
+    else:
+        print("not custom auto setting y-axis")
 
+
+# Find previous or x month
+#By default month finds only that month.
+def find_dates(year, month, month_lenth=0):
+
+
+    start_date = datetime.datetime(year, month, 1)
+    end_date = start_date + relativedelta.relativedelta(months=+month_lenth+1, days=-1)
+
+
+    # SQLlite wants between date to be smaller, greater first in query. To satisfy little logic to allow negative month_lenth
+    if start_date > end_date:
+        temp_start_date = start_date
+        temp_end_date = end_date
+        start_date = temp_end_date
+        end_date = temp_start_date
+        start_date = datetime.datetime(start_date.year, start_date.month, 1)
+        end_date = end_date + relativedelta.relativedelta(days=-1)
+
+
+    # Due to SQL returning string, other function to draw graph expects string formatted time.
+    start_date = start_date.strftime("%Y-%m-%d")
+    end_date = end_date.strftime("%Y-%m-%d")
+    return start_date, end_date
 
 
 
@@ -229,7 +304,7 @@ def set_min_max_record(tbl_name, col, start_date, end_date):
 
     return [lim_min-ten_percent, lim_max+ten_percent]
 
-
+'''
 if __name__ == '__main__':
 
     """
@@ -259,7 +334,7 @@ if __name__ == '__main__':
 
     """
 
-
+    """
     tbl_name = 'weight'
     date_name = 'Date'
     start_date = '2017-04-01'
@@ -268,4 +343,19 @@ if __name__ == '__main__':
 
     df = df_with_query(tbl_name, date_name, start_date, end_date)
     plot_monthly(df[date_name], df[y_axis], tbl_name, start_date, end_date)
+    """
 
+
+    date_name = 'Date'
+    start_date = '2017-02-21'
+    end_date = '2017-02-28'
+
+    tbl_name = 'mood'
+    y_axis = 'mood'
+
+    df = df_with_query(tbl_name, date_name, start_date, end_date)
+    plot_monthly(df[date_name], df[y_axis], tbl_name, start_date, end_date)
+'''
+
+if __name__ == '__main__':
+    print(find_dates(2017, 3, -5))

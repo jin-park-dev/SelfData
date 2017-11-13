@@ -5,14 +5,17 @@ import numpy as np
 import datetime
 import Cleaning.cutil as cutil
 from Report.util_report_config import *
+from Cleaning.util_config import root_dir
 
 
 def clean_sleep_as_android():
     # ===== Config ========
 
-    # data_root =
+    sleep_file = r'\sleep-export.csv'
+    path_sleep = root_dir + sleep_file
 
-    path_sleep = r'D:\OneDrive\0 My Files\1 Documents\4 Raw Data\2 My Data\201x TO 2017-07-24\sleep-export.csv'
+
+    # path_sleep = r'D:\OneDrive\0 My Files\1 Documents\4 Raw Data\2 My Data\201x TO 2017-07-24\sleep-export.csv'
 
 
     # ===== Sleep as Android collection Cleaning ========
@@ -182,3 +185,6 @@ def clean_sleep_as_android():
     # sleep.to_sql('sleep_all', conn)#, if_exists='append'
     sleep_sum.to_sql('sleep', conn, if_exists='append')
     conn.close()
+
+if __name__ == '__main__':
+    clean_sleep_as_android()

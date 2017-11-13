@@ -4,6 +4,8 @@ import sqlite3
 import numpy as np
 import Cleaning.cutil as cutil
 from Report.util_report_config import *
+from Cleaning.util_config import root_dir
+
 
 
 # todo: important! some files contain "~" with same date. For now I deleted manually but later I automate this task. When i get new data I will run into this and error will be thrown.

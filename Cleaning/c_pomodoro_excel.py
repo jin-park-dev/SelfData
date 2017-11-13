@@ -5,6 +5,7 @@ import numpy as np
 import Cleaning.cutil as cutil
 from Report.util_report_config import *
 
+
 # todo: important! some files contain "~" with same date. For now I deleted manually but later I automate this task. When i get new data I will run into this and error will be thrown.
 # todo: found the bug. Only data is inconsistent. I started from 2011 previous which avoids all the bugs
 
@@ -12,8 +13,6 @@ from Report.util_report_config import *
 def clean_pomodoro_excel():
 
     # ===== Config ========
-
-    # data_root =
 
     excel_pomodoro_path = r'D:\OneDrive\0 My Files\1 Documents\2 MS Office\1 Excel\2017\2 Pomodoro'
 

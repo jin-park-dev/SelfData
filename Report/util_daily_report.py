@@ -94,6 +94,7 @@ def plot_monthly(series_dates, series_record, tbl_name, start_date, end_date, st
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    print(dates_list)
     ax.plot(dates_list, series_record, c='#DCD6F7', alpha=0.3) #dashes=(1,10), dash_capstyle='round', dash_joinstyle='round'
     ax.scatter(dates_list, series_record, c='#4E4C67', s=20, alpha=0.8)
 

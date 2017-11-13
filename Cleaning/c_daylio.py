@@ -3,14 +3,15 @@ import os
 import sqlite3
 import Cleaning.cutil as cutil
 from Report.util_report_config import *
+from Cleaning.util_config import root_dir
 
 
 def clean_daylio():
     # ===== Config ========
 
-    # data_root =
-
-    path_daylio = r'D:\OneDrive\0 My Files\1 Documents\4 Raw Data\2 My Data\201x TO 2017-07-24\daylio_export.csv'
+    daylio_file = r'\daylio_export.csv'
+    path_daylio = root_dir + daylio_file
+    # path_daylio = r'D:\OneDrive\0 My Files\1 Documents\4 Raw Data\2 My Data\1_current\daylio_export.csv'
 
 
     # my_data_master=

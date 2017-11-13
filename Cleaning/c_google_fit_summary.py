@@ -4,13 +4,16 @@ import sqlite3
 import numpy as np
 import Cleaning.cutil as cutil
 from Report.util_report_config import *
+from Cleaning.util_config import root_dir
+
 
 def clean_google_fit_summary():
     # ===== Config ========
 
-    # data_root =
+    gfit_file = r'\Takeout\Fit\Daily Aggregations\Daily Summaries.csv'
+    fit_agg_path = root_dir + gfit_file
 
-    fit_agg_path = r'D:\OneDrive\0 My Files\1 Documents\4 Raw Data\2 My Data\201x TO 2017-07-24\Takeout\Fit\Daily Aggregations\Daily Summaries.csv'
+    # fit_agg_path = r'D:\OneDrive\0 My Files\1 Documents\4 Raw Data\2 My Data\201x TO 2017-07-24\Takeout\Fit\Daily Aggregations\Daily Summaries.csv'
 
 
     # my_data_master=

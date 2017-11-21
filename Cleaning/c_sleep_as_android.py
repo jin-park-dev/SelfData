@@ -7,6 +7,8 @@ import Cleaning.cutil as cutil
 from Report.util_report_config import *
 from Cleaning.util_config import root_dir
 
+from sys import exit
+
 
 def clean_sleep_as_android():
     # ===== Config ========
@@ -110,11 +112,12 @@ def clean_sleep_as_android():
             date = from_time.date()
             # print(date)
             # print('\n\n')
-            sleep_sum_dict[date] = 0 # shit how do i simply just add new data???
+            sleep_sum_dict[date] = [0,from_time] # shit how do i simply just add new data???
         else:
             date = from_time.date()
-            sleep_sum_dict[date] = 0
+            sleep_sum_dict[date] = [0,from_time]
 
+    # This actually calculate the hour
     for index, row in sleep.iterrows():
 
         from_time = sleep['From'].iloc[index]
@@ -125,37 +128,35 @@ def clean_sleep_as_android():
         if from_time.hour >= 9+12:
             from_time = from_time + pd.Timedelta(days=1)
             date = from_time.date()
-            sleep_sum_dict[date] += sleep.iloc[index]['Hours'] # shit how do i simply just add new data???
+            sleep_sum_dict[date][0] += sleep.iloc[index]['Hours'] # shit how do i simply just add new data???
         else:
             date = from_time.date()
-            sleep_sum_dict[date] += sleep.iloc[index]['Hours']
+            sleep_sum_dict[date][0] += sleep.iloc[index]['Hours']
 
     # print(sleep_sum_dict)
-
-
-
-
-    # print(sleep_sum_dict)
-
-
 
 
 
     # Fixing sleep hour to be 2 decimal place.
     # Making index ascending order from earliest date.
-    # print(sleep_sum_dict)
-
 
     # print(list(sleep_sum_dict.items()))
 
-    sleep_sum = pd.DataFrame(list(sleep_sum_dict.items()), columns=['Date', 'total_hours'])
+    sleep_sum = pd.DataFrame(columns=['Date', 'total_hours', 'sleep_time'])
 
+    for key, value in sleep_sum_dict.items():
+        temp_df = pd.DataFrame([[key, value[0], value[1]]], columns=['Date', 'total_hours', 'sleep_time'])
+        sleep_sum = sleep_sum.append(temp_df)
+
+    # sleep_sum = pd.DataFrame(list(sleep_sum_dict.items()), columns=['Date', 'total_hours', 'sleep_time'])
     sleep_sum['total_hours'] = sleep_sum['total_hours'].round(2)
     sleep_sum['Date'] = pd.to_datetime(sleep_sum['Date'], format="%Y-%m-%d")
+    sleep_sum['sleep_time'] = pd.to_datetime(sleep_sum['sleep_time'], format="%Y-%m-%d %H:%M:%S")
     sleep_sum = sleep_sum.sort_values('Date', axis=0)
     sleep_sum = sleep_sum.reset_index(drop=True)
 
     # print(sleep_sum['Date'].tail())
+    print(sleep_sum)
 
 
     # print(sleep_sum.dtypes)
@@ -169,11 +170,10 @@ def clean_sleep_as_android():
     print(sleep.dtypes)
     """
 
-    # TODO: Only works for sleep_sum not sleep. (Sleep sum shows total sleep per day)
     # Dropping all the dates already in database
+    # re: Going to replace for now
     tbl_name = daily_config['sleep']['tbl_name']
-
-    sleep_sum = cutil.get_only_new_data_df(sleep_sum, tbl_name)
+    # sleep_sum = cutil.get_only_new_data_df(sleep_sum, tbl_name)
 
 
 
@@ -183,7 +183,7 @@ def clean_sleep_as_android():
 
     conn = sqlite3.connect('selfdata_01.db')
     # sleep.to_sql('sleep_all', conn)#, if_exists='append'
-    sleep_sum.to_sql('sleep', conn, if_exists='append')
+    sleep_sum.to_sql(tbl_name, conn, if_exists='replace')
     conn.close()
 
 if __name__ == '__main__':

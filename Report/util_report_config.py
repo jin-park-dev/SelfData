@@ -47,6 +47,22 @@ daily_config = {
             'y_lim_offset': 1,
             'y_lim_offset_percentage': 0.10
         },
+    'excel_pomodoro':
+    {
+        'tbl_name': 'pomodoro',
+        'date_name': 'Date',
+        'y_axis': 'pomo_total',
+        'y_lim_offset': 1,
+        'y_lim_offset_percentage': 0.10
+        },
+    'excel_nootropic':
+        {
+            'tbl_name': 'nootropic',
+            'date_name': 'Date',
+            'y_axis': 'pomo_total',
+            'y_lim_offset': 1,
+            'y_lim_offset_percentage': 0.10
+        },
     'pomo_kanban_daily':
         {
             'tbl_name': 'pomo_kanban_daily',
